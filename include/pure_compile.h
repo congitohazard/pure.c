@@ -1,37 +1,46 @@
 #ifndef PURE_BUILDER_COMPILE_H
 #define PURE_BUILDER_COMPILE_H
 
+#include "pure_memory.h"
+
+DECLARE_DA(PureString *, Path);
+DECLARE_SLICE(PureLiteral *, Path);
+DECLARE_SLICE(PureLiteral *, Context);
+
 typedef struct {
-    const char *cc;
-    const char *cflags;
-    // const char *ldflags;
+    PureLiteral cc, cflags, ldflags;
     struct {
-        const char *obj;
-        const char *exe;
+        PureLiteral obj, exe;
     } extensions;
-    const char *include_flag;
-    const char *define_flag;
-    const char *output_flag;
+    struct {
+        PureLiteral include, define, output;
+    } flags;
 } PureToolchain;
 
 typedef struct {
-    const char **paths;
-    size_t length, capacity;
-} PurePathList;
+    PureContextSlice definitions, includeDirs, libDirs, libs;
+} PureContext;
 
 typedef struct {
     PureToolchain *tc;
     struct {
-        const char **inputs;
-        const char **outputs;
+        PureLiteral *inputs;
+        PureLiteral *outputs;
         size_t count;
     } paths;
-} PureJob;
+} PureCompileJob;
+
+typedef struct {
+    PureToolchain *tc;
+    PureLiteral output;
+    PurePathSlice *inputs;
+} PureLinkJob;
 
 extern PureToolchain defaultChain;
 extern PureToolchain defaultReleaseChain;
 extern PureToolchain defaultDebugChain;
 
-void pure_compile_sources(PureJob *job);
+void pure_compile_sources(PureCompileJob *job);
+void pure_link_sources(PureLinkJob *job);
 
 #endif
