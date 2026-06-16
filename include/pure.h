@@ -2,6 +2,6 @@
 #define PURE_BUILDER_H
 
 #include "pure_definitions.h"
-#include "pure_compile.h"
+#include "core/pure_compile.h"
 
 #endif

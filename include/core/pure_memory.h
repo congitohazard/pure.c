@@ -8,35 +8,30 @@
 
 #define GET_STATIC_SIZE(_arr)     \
     (sizeof(_arr) / sizeof(*_arr))
+
 #define TAKE_STATIC_SLICE(_arr)   \
     { _arr, GET_STATIC_SIZE(_arr) }
+
 #define TAKE_DA_SLICE(_da, _name) \
     (Pure ## _name ## Slice) { .data = _da.data, .length = _da.length }
 
-#define DECLARE_DA(_type, _name)    \
-    typedef struct {                \
-        _type *data;                \
-        size_t length, capacity     \
+#define DECLARE_DA(_type, _name)                \
+    typedef struct _Pure ## _name ## Array {    \
+        _type *data;                            \
+        size_t length, capacity;                \
+        PureAllocator mem;                      \
     } Pure ## _name ## Array;
 
-#define DECLARE_SLICE(_type, _name) \
-    typedef struct {                \
-        _type *data;                \
-        size_t length;              \
+#define DECLARE_SLICE(_type, _name)             \
+    typedef struct _Pure ## _name ## Slice {    \
+        _type *data;                            \
+        size_t length;                          \
     } Pure ## _name ## Slice;
 
 #define NEXT_INDEX(_arr, _val) _arr.data[_arr.length] = _val
 
-// #define da_append_def(_da, _item) 
-#define da_append(_da, _item, _alloc)                                       \
-    do {                                                                    \
-        if(_da.length >= _da.capacity) {                                    \
-            if(_da.capacity == 0) _da.capacity = 256;                       \
-            else _da.capacity *= 2;                                         \
-            _da.data = realloc(_da.data, _da.capacity * sizeof(*_da.data)); \
-        }                                                                   \
-        _da.data[_da.length++] = _item;                                     \
-    } while(0)
+#define da_append_def(_da, _item)
+#define da_append(_da, _item)
 
 typedef const char *PureLiteral;
 typedef char *PureString;
@@ -52,10 +47,10 @@ typedef struct {
 
 typedef struct {
     PureStringArray str;
-    PureAllocator mem;
     PureDefaultStringBuffer staticBuffer;
 } PureStringBuilder;
 
+#define INITIAL_DEFAULT_ALLOCATOR { malloc, realloc, free }
 extern PureAllocator defaultAllocator;
 
 void pure_sb_init(PureStringBuilder *builder);

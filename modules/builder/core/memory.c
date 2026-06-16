@@ -1,8 +1,8 @@
 #include <stdlib.h>
 
-#include <pure_memory.h>
+#include <core/pure_memory.h>
 
-PureAllocator defaultAllocator = { malloc, realloc, free };
+PureAllocator defaultAllocator = INITIAL_DEFAULT_ALLOCATOR;
 
 void pure_sb_init(PureStringBuilder *builder) {
     builder->str = (PureStringArray) {
@@ -10,7 +10,7 @@ void pure_sb_init(PureStringBuilder *builder) {
         .length = 0,
         .capacity = GET_STATIC_SIZE(builder->staticBuffer)  
     };
-    builder->mem = defaultAllocator;
+    builder->str.mem = defaultAllocator;
 }
 
 void pure_sb_init_with(PureStringBuilder *builder, PureAllocator mem) {
@@ -19,7 +19,7 @@ void pure_sb_init_with(PureStringBuilder *builder, PureAllocator mem) {
         .length = 0,
         .capacity = GET_STATIC_SIZE(builder->staticBuffer)  
     };
-    builder->mem = mem;
+    builder->str.mem = mem;
 }
 
 PureErrorCode pure_sb_push(PureStringBuilder *builder, char c) {

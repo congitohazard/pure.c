@@ -3,12 +3,18 @@
 
 #include <Windows.h>
 
-#include <internal/pure_platform.h>
+#include <abs/pure_platform.h>
 
-PureErrorCode platform_run_command(PureCommandSlice cmd) {
-    STARTUPINFO si = { .cb = sizeof(si) };
-    PROCESS_INFORMATION pi = {0};
+static STARTUPINFO emptyConfig = { .cb = sizeof(STARTUPINFO) };
+static PROCESS_INFORMATION emptyInfo;
+
+static PureProcExit read_windows_proc_exit(HANDLE procHandle);
+
+PureErrorCode platform_run_sync(PureCommandSlice cmd, PureProcExit *outExit) {
+    STARTUPINFO config = emptyConfig;
+    PROCESS_INFORMATION info = emptyInfo;
     PureErrorCode code = PURE_SUCCESS_CODE;
+
     PureStringBuilder builder;
     pure_sb_init(&builder);
 
@@ -25,7 +31,7 @@ PureErrorCode platform_run_command(PureCommandSlice cmd) {
     PureString cmdStr = pure_sb_finish(&builder, &code);
     if(PURE_IS_ERROR(code)) goto CLEANUP;
 
-    CreateProcessA(
+    bool started = (bool) CreateProcessA(
         NULL,
         cmdStr,
         NULL,
@@ -34,10 +40,109 @@ PureErrorCode platform_run_command(PureCommandSlice cmd) {
         CREATE_NO_WINDOW,
         NULL,
         NULL,
-        &si,
-        &pi
+        &config,
+        &info
     );
+
+    if(started) {
+        WaitForSingleObject(info.hProcess, INFINITE);
+        if(outExit != NULL)
+            *outExit = read_windows_proc_exit(info.hProcess);
+        CloseHandle(info.hThread);
+        CloseHandle(info.hProcess);
+    }
+    else
+        code = PURE_ERROR_PROC_FAIL;
+
     CLEANUP:
     pure_sb_clean(&builder);
     return code;
+}
+
+PureErrorCode platform_run_async(PureCommandSlice cmd, PureProc *outProc) {
+    STARTUPINFO config = emptyConfig;
+    PROCESS_INFORMATION info = emptyInfo;
+    PureErrorCode code = PURE_SUCCESS_CODE;
+
+    PureStringBuilder builder;
+    pure_sb_init(&builder);
+
+    for(size_t i = 0; i < cmd.length; i++) {
+        for(PureLiteral current = cmd.data[i]; *current != '\0'; current++) {
+            code = pure_sb_push(&builder, *current);
+            if(PURE_IS_ERROR(code)) goto CLEANUP;
+        }
+        if(i != cmd.length - 1) {
+            code = pure_sb_push(&builder, ' ');
+            if(PURE_IS_ERROR(code)) goto CLEANUP;
+        }
+    }
+    PureString cmdStr = pure_sb_finish(&builder, &code);
+    if(PURE_IS_ERROR(code)) goto CLEANUP;
+
+    bool started = (bool) CreateProcessA(
+        NULL,
+        cmdStr,
+        NULL,
+        NULL,
+        FALSE,
+        CREATE_NO_WINDOW,
+        NULL,
+        NULL,
+        &config,
+        &info
+    );
+    if(started) {
+        CloseHandle(info.hThread);
+        if(outProc != NULL)
+            outProc->handle = (uintptr_t) info.hProcess;
+    }
+    else
+        code = PURE_ERROR_PROC_FAIL;
+
+    CLEANUP:
+    pure_sb_clean(&builder);
+    return code;
+}
+
+PureProcExit platform_sync_proc(PureProc *proc) {
+    WaitForSingleObject((HANDLE) proc->handle, INFINITE);
+    PureProcExit exitData = read_windows_proc_exit((HANDLE) proc->handle);
+    CloseHandle((HANDLE) proc->handle);
+    return exitData;
+}
+
+PureErrorCode platform_sync_proc_slice(PureProcSlice procs, PureProcExitSlice *outExits) {
+    if(outExits != NULL && outExits->length < procs.length)
+        return PURE_ERROR_INVALID_INPUT;
+
+    HANDLE *handles = defaultAllocator.alloc(procs.length * sizeof(HANDLE));
+    if(handles == NULL)
+        return PURE_ERROR_ENOMEM;
+
+    for(size_t i = 0; i < procs.length; i++)
+        handles[i] = (HANDLE) procs.data[i].handle;
+
+    WaitForMultipleObjects((DWORD) procs.length, handles, TRUE, INFINITE);
+    for(size_t i = 0; i < procs.length; i++) {
+        if(outExits != NULL)
+            outExits->data[i] = read_windows_proc_exit(handles[i]);
+        CloseHandle(handles[i]);
+    }
+    defaultAllocator.free(handles);
+    return PURE_SUCCESS_CODE;
+}
+
+static PureProcExit read_windows_proc_exit(HANDLE procHandle) {
+    DWORD exitCode = 0;
+    PureProcExit exitData;
+    GetExitCodeProcess(procHandle, &exitCode);
+    exitData.code = (int) exitCode;
+    if(exitCode == 0)
+        exitData.type = PURE_PROC_EXIT_SUCCESS;
+    else if(exitCode & 0xC0000000)
+        exitData.type = PURE_PROC_EXIT_CRASH;
+    else
+        exitData.code = PURE_PROC_EXIT_ERROR;
+    return exitData;
 }
