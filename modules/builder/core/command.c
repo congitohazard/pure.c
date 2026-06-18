@@ -1,2 +1,2 @@
-#include <abs/pure_platform.h>
-#include <core/pure_command.h>
+#include <pure/abs/platform.h>
+#include <pure/core/command.h>

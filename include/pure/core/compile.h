@@ -1,7 +1,7 @@
 #ifndef PURE_BUILDER_COMPILE_H
 #define PURE_BUILDER_COMPILE_H
 
-#include "pure_memory.h"
+#include "memory.h"
 
 DECLARE_DA(PureString *, Path);
 DECLARE_SLICE(PureLiteral *, Path);

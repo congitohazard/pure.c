@@ -1,4 +1,4 @@
-#include <pure.h>
+#include <pure/pure.h>
 #include <errno.h>
 
 PureToolchain defaultChain = {

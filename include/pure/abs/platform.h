@@ -3,9 +3,9 @@
 
 #include <stdint.h>
 
-#include "../core/pure_error.h"
-#include "../core/pure_memory.h"
-#include "../core/pure_command.h"
+#include "../core/error.h"
+#include "../core/memory.h"
+#include "../core/command.h"
 
 DECLARE_SLICE(PureProc, Proc);
 DECLARE_SLICE(PureProcExit, ProcExit);
@@ -27,10 +27,10 @@ typedef struct {
     int code;
 } PureProcExit;
 
-PureErrorCode platform_run_sync(PureCommandSlice cmd, PureProcExit *outExit);
-PureErrorCode platform_run_async(PureCommandSlice cmd, PureProc *outProc);
+PureErrorCode pure_platform_run_sync(PureCommandSlice cmd, PureProcExit *outExit);
+PureErrorCode pure_platform_run_async(PureCommandSlice cmd, PureProc *outProc);
 
-PureErrorCode platform_sync_proc(PureProc *proc, PureProcExit *outExit);
-PureErrorCode platform_sync_proc_slice(PureProcSlice procs, PureProcExitSlice *outExits);
+PureErrorCode pure_platform_sync_proc(PureProc *proc, PureProcExit *outExit);
+PureErrorCode pure_platform_sync_proc_slice(PureProcSlice procs, PureProcExitSlice *outExits);
 
 #endif

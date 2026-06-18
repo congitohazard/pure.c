@@ -10,6 +10,14 @@
 #elif defined(_MSC_VER)
     #define COMPILER_MSVC
     #define DEFAULT_CC "cl"
+
+    #include <stddef.h>
+    #ifndef max_align_t
+        typedef struct {
+            long long __max_align_ll;
+            long double __max_align_ld;
+        } max_align_t;
+    #endif
 #else
     #define COMPILER_UNKNOWN
 #endif

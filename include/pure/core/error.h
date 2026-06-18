@@ -1,6 +1,9 @@
 #ifndef PURE_BUILDER_ERROR_H
 #define PURE_BUILDER_ERROR_H
 
+#include <stdbool.h>
+#include <assert.h>
+
 typedef enum {
     PURE_SUCCESS_CODE,
     PURE_ERROR_GENERIC,
@@ -11,5 +14,9 @@ typedef enum {
 
 #define PURE_IS_SUCCESS(_code) (_code == PURE_SUCCESS_CODE)
 #define PURE_IS_ERROR(_code)   (_code != PURE_SUCCESS_CODE)
+
+#ifndef PURE_ASSERT
+    #define PURE_ASSERT assert
+#endif 
 
 #endif

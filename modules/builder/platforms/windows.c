@@ -3,14 +3,14 @@
 
 #include <Windows.h>
 
-#include <abs/pure_platform.h>
+#include <pure/abs/platform.h>
 
 static STARTUPINFO emptyConfig = { .cb = sizeof(STARTUPINFO) };
 static PROCESS_INFORMATION emptyInfo;
 
 static PureProcExit read_windows_proc_exit(HANDLE procHandle);
 
-PureErrorCode platform_run_sync(PureCommandSlice cmd, PureProcExit *outExit) {
+PureErrorCode pure_platform_run_sync(PureCommandSlice cmd, PureProcExit *outExit) {
     STARTUPINFO config = emptyConfig;
     PROCESS_INFORMATION info = emptyInfo;
     PureErrorCode code = PURE_SUCCESS_CODE;
@@ -18,12 +18,12 @@ PureErrorCode platform_run_sync(PureCommandSlice cmd, PureProcExit *outExit) {
     PureStringBuilder builder;
     pure_sb_init(&builder);
 
-    for(size_t i = 0; i < cmd.length; i++) {
-        for(PureLiteral current = cmd.data[i]; *current != '\0'; current++) {
+    for(size_t i = 0; i < cmd.len; i++) {
+        for(PureLiteral current = cmd.elems[i]; *current != '\0'; current++) {
             code = pure_sb_push(&builder, *current);
             if(PURE_IS_ERROR(code)) goto CLEANUP;
         }
-        if(i != cmd.length - 1) {
+        if(i != cmd.elems - 1) {
             code = pure_sb_push(&builder, ' ');
             if(PURE_IS_ERROR(code)) goto CLEANUP;
         }
@@ -59,7 +59,7 @@ PureErrorCode platform_run_sync(PureCommandSlice cmd, PureProcExit *outExit) {
     return code;
 }
 
-PureErrorCode platform_run_async(PureCommandSlice cmd, PureProc *outProc) {
+PureErrorCode pure_platform_run_async(PureCommandSlice cmd, PureProc *outProc) {
     STARTUPINFO config = emptyConfig;
     PROCESS_INFORMATION info = emptyInfo;
     PureErrorCode code = PURE_SUCCESS_CODE;
@@ -67,12 +67,12 @@ PureErrorCode platform_run_async(PureCommandSlice cmd, PureProc *outProc) {
     PureStringBuilder builder;
     pure_sb_init(&builder);
 
-    for(size_t i = 0; i < cmd.length; i++) {
-        for(PureLiteral current = cmd.data[i]; *current != '\0'; current++) {
+    for(size_t i = 0; i < cmd.len; i++) {
+        for(PureLiteral current = cmd.elems[i]; *current != '\0'; current++) {
             code = pure_sb_push(&builder, *current);
             if(PURE_IS_ERROR(code)) goto CLEANUP;
         }
-        if(i != cmd.length - 1) {
+        if(i != cmd.len - 1) {
             code = pure_sb_push(&builder, ' ');
             if(PURE_IS_ERROR(code)) goto CLEANUP;
         }
@@ -105,28 +105,28 @@ PureErrorCode platform_run_async(PureCommandSlice cmd, PureProc *outProc) {
     return code;
 }
 
-PureProcExit platform_sync_proc(PureProc *proc) {
+PureProcExit pure_platform_sync_proc(PureProc *proc) {
     WaitForSingleObject((HANDLE) proc->handle, INFINITE);
     PureProcExit exitData = read_windows_proc_exit((HANDLE) proc->handle);
     CloseHandle((HANDLE) proc->handle);
     return exitData;
 }
 
-PureErrorCode platform_sync_proc_slice(PureProcSlice procs, PureProcExitSlice *outExits) {
-    if(outExits != NULL && outExits->length < procs.length)
+PureErrorCode pure_platform_sync_proc_slice(PureProcSlice procs, PureProcExitSlice *outExits) {
+    if(outExits != NULL && outExits->len < procs.len)
         return PURE_ERROR_INVALID_INPUT;
 
-    HANDLE *handles = defaultAllocator.alloc(procs.length * sizeof(HANDLE));
+    HANDLE *handles = defaultAllocator.alloc(procs.len * sizeof(HANDLE));
     if(handles == NULL)
         return PURE_ERROR_ENOMEM;
 
-    for(size_t i = 0; i < procs.length; i++)
-        handles[i] = (HANDLE) procs.data[i].handle;
+    for(size_t i = 0; i < procs.len; i++)
+        handles[i] = (HANDLE) procs.elems[i].handle;
 
-    WaitForMultipleObjects((DWORD) procs.length, handles, TRUE, INFINITE);
-    for(size_t i = 0; i < procs.length; i++) {
+    WaitForMultipleObjects((DWORD) procs.len, handles, TRUE, INFINITE);
+    for(size_t i = 0; i < procs.len; i++) {
         if(outExits != NULL)
-            outExits->data[i] = read_windows_proc_exit(handles[i]);
+            outExits->elems[i] = read_windows_proc_exit(handles[i]);
         CloseHandle(handles[i]);
     }
     defaultAllocator.free(handles);
