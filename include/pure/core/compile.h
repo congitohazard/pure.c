@@ -6,9 +6,11 @@
 // DECLARE_DA(PureString *, Path);
 DECLARE_SLICE(PureLiteral *, Path);
 DECLARE_SLICE(PureLiteral *, Context);
+DECLARE_SLICE(PureLiteral *, Literal);
 
 typedef struct {
-    PureLiteral cc, cflags, ldflags;
+    PureLiteral cc;
+    PureLiteralSlice cflags, ldflags;
     struct {
         PureLiteral obj, exe;
     } extensions;

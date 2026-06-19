@@ -1,10 +1,10 @@
 #include <pure/pure.h>
 #include <errno.h>
 
-PureToolchain defaultChain = {
+PureToolchain defaultChain = { 
     .cc = "gcc",
-    .cflags = "-Wall -Wextra -Wpedantic -std=c17",
-    .ldflags = "",
+    .cflags = PURE_CONSTRUCT_SLICE(PureLiteral, "-Wall", "-Wextra", "-Wpedantic", "-std=c17"),
+    .ldflags = PURE_EMPTY_SLICE,
     .extensions = {
         .obj = ".o",
         .exe = ".exe"

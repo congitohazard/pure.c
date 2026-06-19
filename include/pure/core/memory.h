@@ -17,6 +17,14 @@
 #define TAKE_STATIC_SLICE_LITERAL(_arr, _name)   \
     (Pure ## _name ## Slice) { _arr, GET_STATIC_SIZE(_arr) }
 
+#define PURE_CONSTRUCT_SLICE(_type, ...)                                        \
+    {                                                                           \
+        .elems = (_type []) { __VA_ARGS__ },                            \
+        .len = sizeof((_type []) {__VA_ARGS__}) / sizeof(_type) \
+    }
+
+#define PURE_EMPTY_SLICE { NULL, 0 }
+
 #define DECLARE_SLICE(_type, _name)             \
     typedef union _Pure ## _name ## Slice {     \
         struct {                                \
@@ -36,7 +44,6 @@
         Pure ## _name ## Slice slice;       \
         PureAnonArray anon;                 \
     } Pure ## _name ## Array
-
 typedef struct _PureArrayMeta {
     size_t cap, growthFactor;
     PureAllocator *mem;
