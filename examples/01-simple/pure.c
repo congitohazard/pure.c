@@ -1,6 +1,4 @@
-#include <pure.h>
+#include <pure/pure.h>
 
 int main(void) {
-
-
 }

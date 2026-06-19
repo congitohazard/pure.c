@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "error.h"
@@ -13,28 +14,51 @@
 #define TAKE_STATIC_SLICE(_arr)   \
     { _arr, GET_STATIC_SIZE(_arr) }
 
-#define TAKE_STATIC_SLICE_LITERAL(_arr)   \
-    { _arr, GET_STATIC_SIZE(_arr) }
-
-#define TAKE_DA_SLICE(_da, _name) \
-    (Pure ## _name ## Slice) { .elems = _da.elems, .len = _da.len }
-
-#define DECLARE_DA(_type, _name)                \
-    typedef struct Pure ## _name ## _Array {    \
-        _type *elems;                           \
-        union {                                 \
-            PureDaMetaData;                     \
-            PureDaMetaData meta;                \
-        };                                      \
-    } Pure ## _name ## Array
+#define TAKE_STATIC_SLICE_LITERAL(_arr, _name)   \
+    (Pure ## _name ## Slice) { _arr, GET_STATIC_SIZE(_arr) }
 
 #define DECLARE_SLICE(_type, _name)             \
-    typedef struct _Pure ## _name ## Slice {    \
-        _type *elems;                           \
-        size_t len;                             \
+    typedef union _Pure ## _name ## Slice {     \
+        struct {                                \
+            _type *elems;                       \
+            size_t len;                         \
+        };                                      \
+        PureAnonSlice anon;                     \
     } Pure ## _name ## Slice
 
-DECLARE_DA(char, Char);
+#define DECLARE_DA_WITH_SLICE(_type, _name) \
+    DECLARE_SLICE(_type, _name);            \
+    typedef union {                         \
+        struct {                            \
+            Pure ## _name ## Slice;         \
+            PureArrayMeta;                  \
+        };                                  \
+        Pure ## _name ## Slice slice;       \
+        PureAnonArray anon;                 \
+    } Pure ## _name ## Array
+
+typedef struct _PureArrayMeta {
+    size_t cap, growthFactor;
+    PureAllocator *mem;
+} PureArrayMeta;
+
+typedef struct _PureAnonSlice {
+    void *elems;
+    size_t len;
+} PureAnonSlice;
+
+typedef struct _PureAnonArray {
+    union {
+        PureAnonSlice;
+        PureAnonSlice slice;
+    };
+    PureArrayMeta;
+} PureAnonArray;
+
+DECLARE_DA_WITH_SLICE(char, Char);
+
+typedef char Byte;
+typedef Byte *ByteStream;
 
 typedef const char *PureLiteral;
 typedef char *PureString;
@@ -63,77 +87,27 @@ extern PureAllocator defaultAllocator;
 #define PURE_DA_EMPTY_WITH(_alloc)   { .mem = &(_alloc) }
 #define PURE_DA_MEM_SIZE(_da)        (_da.len * sizeof(*da.elems))
 
-typedef struct _PureDaMetaData {
-    size_t len, cap, growthFactor;
-    PureAllocator *mem;
-} PureDaMetaData;
-
-#define pure_da_reserve(_da, _amount) \
-    PURE_ASSERT(                        \
-        PURE_IS_SUCCESS( \
-            pure_da_reserve_raw( \
-                (void **) &_da.elems, \
-                _amount, \
-                &_da.meta, \
-                sizeof(*_da.elems) \
-            ) \
-        )     \
+#define pure_da_reserve(_da, _amount)   \
+    pure_da_reserve_raw(                \
+        (PureAnonArray *) &_da.anon,    \
+        _amount,                        \
+        sizeof(*_da.elems)              \
     )
 
-#define pure_da_reserve_e(_da, _amount, _error) \
-    _error = pure_da_reserve_raw( \
-        (void **) &_da.elems, \
-        _amount, \
-        &_da.meta, \
-        sizeof(*_da.elems) \
-    ) \
+PureErrorCode pure_da_reserve_raw(PureAnonArray *da, size_t amount, size_t elemSize);
+PureErrorCode pure_da_append_raw(PureAnonArray *da, void *elem, size_t elemSize);
+PureErrorCode pure_da_extend_raw(PureAnonArray *da, PureAnonSlice *slice, size_t elemSize);
 
-PureErrorCode pure_da_reserve_raw(
-    void **daElems,
-    size_t amount,
-    PureDaMetaData *meta,
-    size_t elemSize
-);
+#define pure_da_append(_da, _elem) \
+    pure_da_append_raw(&_da.anon, (void *) _elem, sizeof(*_da.elems))
 
-#define pure_da_append(_da, _elem)                                          \
-    do {                                                                    \
-        pure_da_reserve(_da, _da.len + 1)                       \
-        _da.elems[_da.len++] = _elem;                                    \
+#define pure_da_extend(_da, _slice) \
+    pure_da_extend_raw(&_da.anon, &_slice.anon, sizeof(*_da.elems))
+
+#define pure_da_clear(_da)  \
+    do {                    \
+        _da.len = 0;        \
     } while(0)
-
-#define pure_da_append_e(_da, _elem, _error)                                \
-    do {                                                                    \
-        pure_da_reserve_e(_da, _da.len + 1, _error);                      \
-        if(PURE_IS_ERROR(_error)) break;                                    \
-        _da.elems[_da.len++] = _elem;                                    \
-    } while(0)
-
-#define pure_da_append_slice(_da, _slice)                                        \
-    do {                                                                                \
-        pure_da_reserve(_da, _da.len + _slice.len)                                  \
-        memcpy( \
-            _da.elems + _da.len, \
-            _slice.elems, \
-            _slice.len * sizeof(*_da.elems) \
-        ); \
-        _da.len += _slice.len; \
-    } while(0)
-
-#define pure_da_append_slice_e(_da, _slice, _error)                                  \
-    do {                                                                                    \
-        pure_da_reserve(_da, _da.len + _slice.len, _error);                        \
-        if(PURE_IS_ERROR(_error))    \
-            break;                                                                          \
-        memcpy( \
-            _da.elems + _da.len, \
-            _slice.elems, \
-            _slice.len * sizeof(*_da.elems) \
-        ); \
-        _da.len += _slice.len; \
-    } while(0)
-
-#define pure_da_clear(_da) \
-    _da.len = 0
 
 #define pure_da_free(_da)               \
     do {                                \

@@ -3,7 +3,7 @@
 
 #include "memory.h"
 
-DECLARE_DA(PureString *, Path);
+// DECLARE_DA(PureString *, Path);
 DECLARE_SLICE(PureLiteral *, Path);
 DECLARE_SLICE(PureLiteral *, Context);
 
@@ -13,7 +13,7 @@ typedef struct {
         PureLiteral obj, exe;
     } extensions;
     struct {
-        PureLiteral include, define, output;
+        PureLiteral nolink, include, define, output;
     } flags;
 } PureToolchain;
 
@@ -23,6 +23,7 @@ typedef struct {
 
 typedef struct {
     PureToolchain *tc;
+    PureContext   *ctx;
     struct {
         PureLiteral *inputs;
         PureLiteral *outputs;

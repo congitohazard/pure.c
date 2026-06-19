@@ -2,7 +2,19 @@
 #include <errno.h>
 
 PureToolchain defaultChain = {
-    0
+    .cc = "gcc",
+    .cflags = "-Wall -Wextra -Wpedantic -std=c17",
+    .ldflags = "",
+    .extensions = {
+        .obj = ".o",
+        .exe = ".exe"
+    },
+    .flags = {
+        .nolink = "-c",
+        .include = "-I",
+        .define = "-D",
+        .output = "-o"
+    }
 };
 
 PureToolchain defaultReleaseChain = {

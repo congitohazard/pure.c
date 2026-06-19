@@ -105,14 +105,14 @@ PureErrorCode pure_platform_run_async(PureCommandSlice cmd, PureProc *outProc) {
     return code;
 }
 
-PureProcExit pure_platform_sync_proc(PureProc *proc) {
+PureProcExit pure_platform_wait_proc(PureProc *proc) {
     WaitForSingleObject((HANDLE) proc->handle, INFINITE);
     PureProcExit exitData = read_windows_proc_exit((HANDLE) proc->handle);
     CloseHandle((HANDLE) proc->handle);
     return exitData;
 }
 
-PureErrorCode pure_platform_sync_proc_slice(PureProcSlice procs, PureProcExitSlice *outExits) {
+PureErrorCode pure_platform_wait_proc_slice(PureProcSlice procs, PureProcExitSlice *outExits) {
     if(outExits != NULL && outExits->len < procs.len)
         return PURE_ERROR_INVALID_INPUT;
 
