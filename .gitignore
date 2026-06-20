@@ -1,2 +1,6 @@
 # Env
 .vscode/
+
+# Binaries
+*.exe
+*.o
