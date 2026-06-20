@@ -10,7 +10,7 @@ static PROCESS_INFORMATION emptyInfo;
 
 static PureProcExit read_windows_proc_exit(HANDLE procHandle);
 
-PureErrorCode pure_platform_run_sync(PureCommandSlice cmd, PureProcExit *outExit) {
+PureErrorCode pure_platform_run_sync(PureStringSlice cmd, PureProcExit *outExit) {
     STARTUPINFO config = emptyConfig;
     PROCESS_INFORMATION info = emptyInfo;
     PureErrorCode code = PURE_SUCCESS_CODE;
@@ -59,7 +59,7 @@ PureErrorCode pure_platform_run_sync(PureCommandSlice cmd, PureProcExit *outExit
     return code;
 }
 
-PureErrorCode pure_platform_run_async(PureCommandSlice cmd, PureProc *outProc) {
+PureErrorCode pure_platform_run_async(PureStringSlice cmd, PureProc *outProc) {
     STARTUPINFO config = emptyConfig;
     PROCESS_INFORMATION info = emptyInfo;
     PureErrorCode code = PURE_SUCCESS_CODE;

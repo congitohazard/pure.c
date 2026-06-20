@@ -1,6 +1,5 @@
 #include <stdlib.h>
-#include <stdalign.h>
-#include <stddef.h>
+#include <string.h>
 
 #include <pure/definitions.h>
 #include <pure/core/memory.h>

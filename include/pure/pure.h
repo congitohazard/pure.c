@@ -3,5 +3,6 @@
 
 #include "definitions.h"
 #include "core/compile.h"
+#include "abs/platform.h"
 
 #endif

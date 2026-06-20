@@ -4,26 +4,31 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <string.h>
 
 #include "error.h"
 
-#define GET_STATIC_SIZE(_arr)     \
+// Slice system
+
+#define GET_STATIC_SIZE(_arr) \
     (sizeof(_arr) / sizeof(*_arr))
 
-#define TAKE_STATIC_SLICE(_arr)   \
+#define TAKE_STATIC_SLICE(_arr) \
     { _arr, GET_STATIC_SIZE(_arr) }
 
-#define TAKE_STATIC_SLICE_LITERAL(_arr, _name)   \
+#define TAKE_STATIC_SLICE_LITERAL(_arr, _name) \
     (Pure ## _name ## Slice) { _arr, GET_STATIC_SIZE(_arr) }
 
-#define PURE_CONSTRUCT_SLICE(_type, ...)                                        \
-    {                                                                           \
-        .elems = (_type []) { __VA_ARGS__ },                            \
+#define PURE_CONSTRUCT_SLICE(_type, ...)                        \
+    {                                                           \
+        .elems = (_type []) { __VA_ARGS__ },                    \
         .len = sizeof((_type []) {__VA_ARGS__}) / sizeof(_type) \
     }
 
-#define PURE_EMPTY_SLICE { NULL, 0 }
+#define PURE_CONSTRUCT_SLICE_LITERAL(_type, ...) \
+    (_type ## Slice) PURE_CONSTRUCT_SLICE(_type, __VA_ARGS__)
+
+#define PURE_EMPTY_SLICE \
+    { .elems = NULL, .len = 0 }
 
 #define DECLARE_SLICE(_type, _name)             \
     typedef union _Pure ## _name ## Slice {     \
@@ -44,15 +49,16 @@
         Pure ## _name ## Slice slice;       \
         PureAnonArray anon;                 \
     } Pure ## _name ## Array
-typedef struct _PureArrayMeta {
-    size_t cap, growthFactor;
-    PureAllocator *mem;
-} PureArrayMeta;
 
 typedef struct _PureAnonSlice {
     void *elems;
     size_t len;
 } PureAnonSlice;
+
+typedef struct _PureArrayMeta {
+    size_t cap, growthFactor;
+    PureAllocator *mem;
+} PureArrayMeta;
 
 typedef struct _PureAnonArray {
     union {
@@ -63,6 +69,8 @@ typedef struct _PureAnonArray {
 } PureAnonArray;
 
 DECLARE_DA_WITH_SLICE(char, Char);
+DECLARE_DA_WITH_SLICE(PureLiteral, Literal);
+DECLARE_DA_WITH_SLICE(PureString, String);
 
 typedef char Byte;
 typedef Byte *ByteStream;
@@ -124,7 +132,12 @@ PureErrorCode pure_da_extend_raw(PureAnonArray *da, PureAnonSlice *slice, size_t
         _da.elems = NULL;               \
     } while(0)
 
-// pure_da_shrink
+#define pure_da_shrink(_da, _newLen)    \
+    do {                                \
+        _da.len = _newLen;              \
+    } while(0)
+
+// pure_da_shrink_to_fit
 // pure_da_insert
 // pure_da_remove
 // pure_da_swap_remove
