@@ -16,14 +16,14 @@ PureErrorCode pure_platform_run_sync(PureStringSlice cmd, PureProcExit *outExit)
     PureErrorCode code = PURE_SUCCESS_CODE;
 
     PureStringBuilder builder;
-    pure_sb_init(&builder);
+    pure_sb_start(&builder);
 
     for(size_t i = 0; i < cmd.len; i++) {
         for(PureLiteral current = cmd.elems[i]; *current != '\0'; current++) {
             code = pure_sb_push(&builder, *current);
             if(PURE_IS_ERROR(code)) goto CLEANUP;
         }
-        if(i != cmd.elems - 1) {
+        if(i != cmd.len - 1) {
             code = pure_sb_push(&builder, ' ');
             if(PURE_IS_ERROR(code)) goto CLEANUP;
         }
@@ -65,7 +65,7 @@ PureErrorCode pure_platform_run_async(PureStringSlice cmd, PureProc *outProc) {
     PureErrorCode code = PURE_SUCCESS_CODE;
 
     PureStringBuilder builder;
-    pure_sb_init(&builder);
+    pure_sb_start(&builder);
 
     for(size_t i = 0; i < cmd.len; i++) {
         for(PureLiteral current = cmd.elems[i]; *current != '\0'; current++) {

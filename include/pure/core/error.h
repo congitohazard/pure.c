@@ -1,5 +1,5 @@
-#ifndef PURE_BUILDER_ERROR_H
-#define PURE_BUILDER_ERROR_H
+#ifndef PURE_CORE_ERROR_H
+#define PURE_CORE_ERROR_H
 
 #include <stdbool.h>
 #include <assert.h>

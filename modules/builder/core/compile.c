@@ -3,7 +3,7 @@
 PureToolchain defaultChain = { 
     .cc = "gcc",
     .cflags = PURE_CONSTRUCT_SLICE(
-        PureString, 
+        PureLiteral, 
         "-Wall", "-Wextra", "-Wpedantic", "-std=c17"
     ),
     .ldflags = PURE_EMPTY_SLICE,

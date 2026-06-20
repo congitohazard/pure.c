@@ -1,5 +1,5 @@
-#ifndef PURE_BUILDER_DETECT_H
-#define PURE_BUILDER_DETECT_H
+#ifndef PURE_DEFINITIONS_H
+#define PURE_DEFINITIONS_H
 
 #if   defined(__clang__)
     #define PURE_COMPILER_CLANG

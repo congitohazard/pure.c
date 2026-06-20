@@ -1,5 +1,5 @@
-#ifndef PURE_BUILDER_COMPILE_H
-#define PURE_BUILDER_COMPILE_H
+#ifndef PURE_CORE_COMPILE_H
+#define PURE_CORE_COMPILE_H
 
 #include "memory.h"
 
@@ -10,7 +10,7 @@
     pure_da_extend(                     \
         _cmdArray,                      \
         PURE_CONSTRUCT_SLICE_LITERAL(   \
-            PureString,                 \
+            PureLiteral,                \
             __VA_ARGS__                 \
         )                               \
     )
@@ -29,7 +29,7 @@
 
 typedef struct {
     PureLiteral cc;
-    PureStringSlice cflags, ldflags;
+    PureLiteralSlice cflags, ldflags;
     struct {
         PureLiteral obj, exe;
     } extensions;
@@ -39,7 +39,7 @@ typedef struct {
 } PureToolchain;
 
 typedef struct {
-    PureStringSlice definitions, includeDirs, libDirs, libs;
+    PureLiteralSlice definitions, includeDirs, libDirs, libs;
 } PureContext;
 
 typedef struct {
@@ -54,7 +54,7 @@ typedef struct {
 
 typedef struct {
     PureToolchain *tc;
-    PureStringSlice inputPaths;
+    PureLiteralSlice inputPaths;
     PureLiteral output;
 } PureLinkJob;
 

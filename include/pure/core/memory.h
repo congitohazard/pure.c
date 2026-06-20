@@ -1,5 +1,5 @@
-#ifndef PURE_BUILDER_MEMORY_H
-#define PURE_BUILDER_MEMORY_H
+#ifndef PURE_CORE_MEMORY_H
+#define PURE_CORE_MEMORY_H
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -43,12 +43,29 @@
     DECLARE_SLICE(_type, _name);            \
     typedef union {                         \
         struct {                            \
-            Pure ## _name ## Slice;         \
+            _type *elems;                   \
+            size_t len;                     \
             PureArrayMeta;                  \
         };                                  \
         Pure ## _name ## Slice slice;       \
         PureAnonArray anon;                 \
     } Pure ## _name ## Array
+
+typedef struct _PureAllocator {
+    void *(*alloc)(size_t size);
+    void *(*realloc)(void *data, size_t newSize);
+    void (*free)(void *data);
+} PureAllocator;
+
+#define INITIAL_DEFAULT_ALLOCATOR \
+    { malloc, realloc, free }
+
+typedef char Byte;
+typedef Byte *ByteStream;
+
+typedef const char *PureLiteral;
+typedef char *PureString;
+typedef char PureDefaultStringBuffer[256];
 
 typedef struct _PureAnonSlice {
     void *elems;
@@ -72,25 +89,10 @@ DECLARE_DA_WITH_SLICE(char, Char);
 DECLARE_DA_WITH_SLICE(PureLiteral, Literal);
 DECLARE_DA_WITH_SLICE(PureString, String);
 
-typedef char Byte;
-typedef Byte *ByteStream;
-
-typedef const char *PureLiteral;
-typedef char *PureString;
-typedef char PureDefaultStringBuffer[256];
-
-typedef struct _PureAllocator {
-    void *(*alloc)(size_t size);
-    void *(*realloc)(void *data, size_t newSize);
-    void (*free)(void *data);
-} PureAllocator;
-
 typedef struct _PureStringBuilder {
     PureCharArray str;
     PureDefaultStringBuffer staticBuffer;
 } PureStringBuilder;
-
-#define INITIAL_DEFAULT_ALLOCATOR { malloc, realloc, free }
 
 extern PureAllocator defaultAllocator;
 
@@ -100,7 +102,7 @@ extern PureAllocator defaultAllocator;
 #define PURE_DA_GROWTH_FACTOR        2
 #define PURE_DA_EMPTY                {0}
 #define PURE_DA_EMPTY_WITH(_alloc)   { .mem = &(_alloc) }
-#define PURE_DA_MEM_SIZE(_da)        (_da.len * sizeof(*da.elems))
+#define PURE_DA_MEM_SIZE(_da)        (_da.len * sizeof(*_da.elems))
 
 #define pure_da_reserve(_da, _amount)   \
     pure_da_reserve_raw(                \
@@ -114,7 +116,7 @@ PureErrorCode pure_da_append_raw(PureAnonArray *da, void *elem, size_t elemSize)
 PureErrorCode pure_da_extend_raw(PureAnonArray *da, PureAnonSlice *slice, size_t elemSize);
 
 #define pure_da_append(_da, _elem) \
-    pure_da_append_raw(&_da.anon, (void *) _elem, sizeof(*_da.elems))
+    pure_da_append_raw(&_da.anon, (void *) &_elem, sizeof(*_da.elems))
 
 #define pure_da_extend(_da, _slice) \
     pure_da_extend_raw(&_da.anon, &_slice.anon, sizeof(*_da.elems))

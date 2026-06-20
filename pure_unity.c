@@ -1,6 +1,5 @@
 #include <pure/pure.h>
 
-#include "modules/builder/core/command.c"
 #include "modules/builder/core/compile.c"
 #include "modules/builder/core/error.c"
 #include "modules/builder/core/memory.c"
